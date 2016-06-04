@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block pagetitle %}Wordlists{% endblock %}
+
+{% block javascript_onload %}
+{% endblock %}
+
+{% block style %}
+<link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css">
+<style>
+.block,
+.caption {
+    padding-top: 10pt;
+    padding-bottom: 10pt;
+}
+.form {
+    padding-top: 10pt;
+    padding-bottom: 10pt;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+{% if message %}
+<div class='block'>
+<div class="alert alert-{% if message.success %}success{% else %}danger{% endif %}">
+<button type="button" class="close">&times;</button>
+{{ message.message }}
+</div>
+</div>
+{% endif %}
+<form action='{{ request.path }}' method='POST'>
+{% csrf_token %}
+<div class='form'>
+<div class='caption'>
+Enter words that you want to add to the list <a href='{% url "myproject.assets.views.show_list" list.list_id %}'>{{ list.title }}</a>:
+</div>
+<textarea class="form-control input-large" name='add_words' rows="10" autofocus>
+</textarea>
+</div>
+<div>
+<button type="submit" class="btn btn-primary">Add</button>
+</div>
+</form>
+{% endblock %}

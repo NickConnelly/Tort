@@ -1,0 +1,45 @@
+#!/bin/sh
+
+cat <<EOF > /dev/null
+Usage:
+
+    $0 FROM TO WORD
+
+EOF
+
+DICT="$1-$2"
+shift 2
+
+case "$DICT" in
+ru-de)
+    DICTNAME="Universal (Ru-Ge)"
+    ;;
+ru-en)
+    DICTNAME="LingvoUniversal (Ru-En)"
+    ;;
+en-ru)
+    DICTNAME="LingvoUniversal (En-Ru)"
+    ;;
+fr-ru)
+    DICTNAME="Universal (Fr-Ru)"
+    ;;
+de-ru)
+    DICTNAME='Universal (Ge-Ru)'
+    ;;
+en-en)
+    DICTNAME="Longman Dictionary of Contemporary English"
+    ;;
+esac
+
+_dict()
+{
+  if [ "$FULL" = YES ]
+  then
+    sdcv -n -u "$DICTNAME" "$1" | fgrep -v .wav
+  else
+    sdcv -n -u "$DICTNAME" "$1" | grep -v — | fgrep -v .wav
+  fi
+}
+
+_dict "$@"
+

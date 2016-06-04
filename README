@@ -1,0 +1,276 @@
+LEARNGGS Installation Manual
+============================
+Igor Chubin, 2013-2014
+
+
+== Installation ==
+
+This manual describes how the LEARNGGS software can be install on a Linux system.
+
+Actual copy of the manual you can find here:
+
+* http://igor.chub.in/projects/learnggs/INSTALL.html
+
+[NOTE]
+===============================
+The manual describes installation on the Debian GNU/Linux system.
+
+Other Debian-based distributions can be used as well, but the names of the OS-based
+dependencies may differ. Please check these names if you want to install the software
+on non-Debian system.
+
+Non-Debian distributions can also be used, but the step "Installation of OS Level dependencies"
+must be done according to the rules of the distibution where the software to be installed.
+All other steps stay the same.
+===============================
+
+
+=== Download and unpack the source code ===
+
+    cd
+    wget http://igor.chub.in/projects/learnggs/learnggs-20140211.tar.gz
+    tar xf learnggs-20140211.tar.gz -C /opt
+    cd /opt/learnggs-20140211
+
+You can install the software in any directory. Here we use +/opt+ to install.
+The software will be installed to +/opt/learnggs-20140211+.
+
+Please note, that you need root rights to install the software in +/opt+.
+
+=== Installation of OS Level dependencies ===
+
+[NOTE]
+================================
+Installation of OS-Level dependencies need
+root privileges. You must be +root+ or use +sudo+ to do this step.
+================================
+
+The way how the dependencies should be installed depends on
+the OS type where the software will be installed/used.
+
+For Debian GNU/Linux (and Debian-based Linux distributions also, but please note,
+that the names of the packages may differ):
+
+    sudo apt-get install ` < requiremetns-os.txt `
+
+Dependencies:
+
+    * python-dev
+    * python-pip
+    * python-virtualenv
+    * python-stemmer
+    * poppler-utils
+    * sdcv
+    * lynx
+    * catdoc
+    * screen
+
+
+In other distributions you must install all these packages 
+using the way that is supposed to be used in the distribution.
+
+=== Installation of Python dependencies ===
+
+When you are inside the root of the project (please change to it first, use "cd" for that),
+you must issue these commands to install all Python-level dependencies:
+    
+    cd /opt/learnggs-20140211
+    virtualenv ve
+    ve/bin/pip install -r requirements.txt
+
+After the installation of the dependencies successfully completed,
+you may go to the next step.
+
+== Configuring ==
+
+    cd /opt/learnggs-20140211
+    mkdir -p myproject/database/
+    ve/bin/python manage.py syncdb
+    ve/bin/python manage.py check_permissions
+
+You will get several questions.
+You must answer these questions.
+
+The installation is now completed.
+Now you can start the program.
+
+=== Email configuration ===
+
+In order to use user self-registering functionality,
+you need to configure email-server in +settings.py+:
+
+    EMAIL_USE_TLS = True  
+    EMAIL_HOST = 'smtp.mail.ru'
+    EMAIL_PORT = 587  
+    EMAIL_HOST_USER = 'username@mail.ru'
+    EMAIL_HOST_PASSWORD = 'password here'
+    DEFAULT_FROM_EMAIL = 'admin@learnggs.com'
+
+Also, please note, that you need to configure your site
+in the admin section of the server and specify realname of your site
+instead of +example.com+.
+
+== Running ==
+
+=== First start ===
+
+To start the program in the debug/development mode:
+
+    ve/bin/python manage.py runserver
+
+Or, if you want that the program be accessible
+from other machines in the net:
+
+    ve/bin/python manage.py runserver 0.0.0.0:8000
+
+The program is now accessible at
+
+    http://address.of.your.machine:8000/
+
+Please note that the program will be stopped if you close the window
+where it runs.
+
+If you want that the program runs even after that, please start +screen+ before
+it:
+
+    screen -S learnggs 
+
+And then, when you are inside the +screen+ session you can start the program:
+
+    ve/bin/python manage.py runserver 0.0.0.0:8000
+
+=== Production running ===
+
+To run the program in the production mode, you need to use external webserver
+like Apache/nginx and configure it to communicate with the program by means of WSGI interface.
+
+Please refer to the documentation of your webserver or contact me if you need help.
+
+== Example ==
+
+This example session shows the installation process conducted on a fresh Debian GNU/Linux host.
+
+=== Video ===
+
+Screencast of the installation process is here:
+
+* http://igor.chub.in/projects/learnggs/learnggs-installation.flv (16 min)
+
+=== Typescript ===
+
+Typescript of the installation process:
+
+.........................................
+
+root@lab0:/# cd
+root@lab0:~# wget http://igor.chub.in/projects/learnggs/learnggs-20140211.tar.gz
+--2014-02-11 20:19:55--  http://igor.chub.in/projects/learnggs/learnggs-20140211.tar.gz
+Resolving igor.chub.in (igor.chub.in)... 46.4.144.244
+Connecting to igor.chub.in (igor.chub.in)|46.4.144.244|:80... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 1134242 (1.1M) [text/plain]
+Saving to: `learnggs-20140211.tar.gz'
+
+2014-02-11 20:19:55 (296 MB/s) - `learnggs-20140211.tar.gz' saved [1134242/1134242]
+
+root@lab0:~# tar xfz learnggs-20140211.tar.gz -C /opt/
+root@lab0:~# cd /opt/learnggs-20140211/
+root@lab0:/opt/learnggs-20140211# # now the os level dependencies will be installed
+root@lab0:/opt/learnggs-20140211# apt-get install ` < requirements-os.txt `
+Reading package lists... 0%
+
+The following extra packages will be installed:
+  ...
+Do you want to continue [Y/n]? y
+  ...
+Install these packages without verification [y/N]? y
+  ...
+Processing triggers for sgml-base ...
+
+root@lab0:/opt/learnggs-20140211# 
+root@lab0:/opt/learnggs-20140211# # All OS-level dependencies are installed
+root@lab0:/opt/learnggs-20140211# # Next step: Installation Python-level dependencio es
+root@lab0:/opt/learnggs-20140211# 
+root@lab0:/opt/learnggs-20140211# virtualenv ve
+New python executable in ve/bin/python
+Installing distribute........done.
+Installing pip...............done.
+root@lab0:/opt/learnggs-20140211# ve/bin/pip install -r requirements.txt
+Downloading/unpacking django==1.6 (from -r requirements.txt (line 1))
+...
+Successfully installed django django-bootstrap3 django-admin-bootstrapped django-user-accounts pinax-theme-bootstrap-account guess-language django-colorful PyStemmer django-appconf pytz six
+Cleaning up...
+root@lab0:/opt/learnggs-20140211# 
+
+root@lab0:/opt/learnggs-20140211# # All Python-level dependencies are installed
+root@lab0:/opt/learnggs-20140211# # Next step: Initial configration of the software
+root@lab0:/opt/learnggs-20140211# mkdir -p myproject/database/
+root@lab0:/opt/learnggs-20140211# ve/bin/python manage.py syncdb
+Creating tables ...
+Creating table auth_permission
+Creating table auth_group_permissions
+Creating table auth_group
+Creating table auth_user_groups
+Creating table auth_user_user_permissions
+Creating table auth_user
+Creating table django_content_type
+Creating table django_session
+Creating table django_site
+Creating table django_admin_log
+Creating table assets_document
+Creating table wordlists_wordlist
+
+You just installed Django's auth system, which means you don't have any superusers defined.
+Would you like to create one now? (yes/no): yes
+Username (leave blank to use 'root'): admin
+Email address: admin@example.com
+Password: 
+Password (again): 
+Superuser created successfully.
+Installing custom SQL ...
+Installing indexes ...
+Installed 0 object(s) from 0 fixture(s)
+
+root@lab0:/opt/learnggs-20140211# 
+root@lab0:/opt/learnggs-20140211# # The software is configured now
+root@lab0:/opt/learnggs-20140211# # We can start it
+root@lab0:/opt/learnggs-20140211# ve/bin/python manage.py runserver 0.0.0.0:8001
+Validating models...
+
+0 errors found
+February 11, 2014 - 14:27:56
+Django version 1.6, using settings 'myproject.settings'
+Starting development server at http://0.0.0.0:8001/
+Quit the server with CONTROL-C.
+root@lab0:/opt/learnggs-20140211# 
+root@lab0:/opt/learnggs-20140211# # I pressed ctrl C
+root@lab0:/opt/learnggs-20140211# # Please note, that the the software was stopped 
+root@lab0:/opt/learnggs-20140211# # if you want to run it in "background" you need to start screen and run the software in it
+root@lab0:/opt/learnggs-20140211# 
+root@lab0:/opt/learnggs-20140211# # The software is stopped
+root@lab0:/opt/learnggs-20140211# screen
+
+(we are in screen now)
+
+root@lab0:/opt/learnggs-20140211# 
+root@lab0:/opt/learnggs-20140211# ve/bin/python manage.py runserver 0.0.0.0:8001
+Validating models...
+
+0 errors found
+February 11, 2014 - 14:34:13
+Django version 1.6, using settings 'myproject.settings'
+Starting development server at http://0.0.0.0:8001/
+Quit the server with CONTROL-C.
+[detached from 4186.pts-16.lab0]
+
+(pressed ctrl-a d)
+
+root@lab0:/opt/learnggs-20140211# 
+root@lab0:/opt/learnggs-20140211# 
+root@lab0:/opt/learnggs-20140211# # I pressed ctrl-a d
+root@lab0:/opt/learnggs-20140211# # the software runs
+root@lab0:/opt/learnggs-20140211# 
+root@lab0:/opt/learnggs-20140211# # Now the software is installed and configured and can be used
+
+.........................................
+

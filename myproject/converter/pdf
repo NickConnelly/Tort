@@ -1,0 +1,4 @@
+#!/bin/sh
+
+pdftotext "$1" "$2"
+

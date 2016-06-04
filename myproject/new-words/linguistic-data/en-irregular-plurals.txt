@@ -1,0 +1,167 @@
+# Sources:
+#
+# * http://grammarist.com/grammar/irregular-plural-nouns/
+# * http://education.fcps.org/oes/sites/default/files/stephen.sahli/015%20Irregular%20Plural%20Nouns.pdf
+# * http://www.esldesk.com/vocabulary/irregular-nouns
+# * http://english-zone.com/spelling/plurals.html
+# * http://es.scribd.com/doc/3271143/List-of-100-Irregular-Plural-Nouns-in-English
+
+echo    echoes
+embargo     embargoes
+hero    heroes
+potato  potatoes
+tomato  tomatoes
+torpedo     torpedoes
+veto    vetoes
+
+foot    feet
+goose   geese
+louse   lice
+man     men
+mouse   mice
+tooth   teeth
+woman   women
+fireman firemen
+person  people
+
+child children
+ox oxen
+
+calf    calves
+dwarf   dwarfs/dwarves
+elf     elves
+half    halves
+hoof    hooves
+knife   knives
+leaf    leaves
+life    lives
+loaf    loaves
+scarf   scarves
+self    selves
+sheaf   sheaves
+shelf   shelves
+thief   thieves
+wife    wives
+wolf    wolves
+
+# -is -> -es
+analysis    analyses
+axis    axes
+basis   bases
+crisis  crises
+diagnosis   diagnoses
+ellipsis    ellipses
+emphasis    emphases
+hypothesis  hypotheses
+neurosis    neuroses
+oasis   oases
+paralysis   paralyses
+parenthesis     parentheses
+parenthesis parentheses
+synopsis synopses
+synthesis   syntheses
+thesis  theses
+
+
+# -ex/-ix -> ices
+apex apices/apexes
+appendix appendices/appendixes
+index indices/indexes
+matrix matrices/matrixes
+cervix cervices/cervixes
+vortex vortices
+
+# -on -> -a
+criterion criteria
+phenomenon phenomena
+automaton automata
+
+# -a -> -ae
+alga algae
+alumna  alumnae
+amoeba amoebae/amoebas
+antenna antennae/antennas
+formula formulae/formulas
+larva larvae
+nebula nebulae/nebulas
+vertebra vertebrae
+vita    vitae
+
+#French
+beau    beaux
+bureau  bureaus/bureaux
+chateau chateaux
+plateau plateaux
+tableau tableaux
+
+
+# Italian
+libretto libretti
+tempo tempi
+virtuoso virtuosi
+
+# Hebrew
+cherub cherubim
+seraph seraphim
+
+# Greek
+schema schemata
+
+# -us -> -a
+corpus corpora
+genus genera
+
+# -us -> -i
+alumnus alumni
+bacillus bacilli
+cactus cacti/cactuses
+focus foci
+fungus fungi/funguses
+hippopotamus hippopotami/hippopotamuses
+nucleus nuclei
+octopus octopi/octopuses
+radius radii
+stimulus stimuli
+syllabus syllabi/syllabuses
+terminus termini
+
+# -um -> -a
+
+addendum addenda
+bacterium bacteria
+curriculum curricula/curriculums
+datum data
+erratum errata
+medium media
+memorandum memoranda/memorandums
+millennium  millenniums/milennia
+ovum ova
+stratum strata
+symposium symposia/symposiums
+
+barracks    barracks
+bison   bison
+corps   corps
+crossroads crossroads
+headquarters headquarters
+deer    deer
+fish    fish
+gallows     gallows
+means   means
+moose   moose
+offspring   offspring
+series  series
+sheep   sheep
+scissors    scissors
+species     species
+
+die dice
+
+apparatus   apparatuses
+watch   watches
+zero    zeros/zeroes
+buffalo buffalos/buffaloes
+mosquito    mosquitoes
+
+
+

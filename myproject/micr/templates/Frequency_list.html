@@ -1,0 +1,16 @@
+<html><body>Your Frequency List:
+<table>
+    <tr>
+        <td>Source Text:_______________</td>
+        <td>Translation:______</td>
+        <td>Frequency:_____</td>
+    </tr>
+  {% for i in TemplateList %}
+    <tr>
+        <td>{{ i.0 }}</td>
+        <td>{{ i.1 }}</td>
+        <td>{{ i.2 }}</td>
+    </tr>
+  {% endfor %}
+</table>
+<body><html>

@@ -1,0 +1,4 @@
+#!/bin/sh
+
+file -i "$1" | sed "s@.*\(application\|text\)/@@; s@;.*@@"
+

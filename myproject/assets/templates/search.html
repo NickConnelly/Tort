@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% load bootstrap3 %}
+
+{% block pagetitle %}Search{% endblock %}
+
+{% block style %}
+<link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css">
+<style>
+.searchbox {
+    padding-top: 50pt;
+    padding-bottom: 50pt;
+    margin:0 auto;
+    width: 100%;
+}
+.searchbox_with_query {
+    padding-top: 20pt;
+    padding-bottom: 50pt;
+    background: #eeeeee;
+}
+.results {
+    padding-left: 10pt;
+}
+h3 {
+    font-size: 16pt;
+}
+h4 {
+    padding-top: 2pt;
+}
+.found_sentence {
+    padding-top: 3pt;
+    padding-top: 3pt;
+}
+.found_sentence b {
+    background: #ffffaa;
+}
+.load_more {
+    padding-top: 5pt;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<form action='{% url "search" %}' method='GET'>
+
+
+{% if query %}
+<div class='searchbox_with_query'>
+  <div class="col-lg-6">
+{% else %}
+<div class='searchbox'>
+  <div class="col-lg-offset-3 col-lg-6">
+{% endif %}
+    <div class="input-group">
+      <input type="text" class="form-control"  name="q" autofocus value="{% if query %}{{ query }}{% endif %}">
+      <span class="input-group-btn">
+        <button class="btn btn-primary" type="button">Go!</button>
+      </span>
+    </div><!-- /input-group -->
+  </div><!-- /.col-lg-6 -->
+
+</div>
+
+{% if query %}
+<div>
+
+{% for t in translation %}
+{% if t.translated %}
+<h3>{{ t.language_from }} &rarr; {{ t.language_to  }}</h3>
+<div class='results'>
+<div class='translation'>{{ t.translation }}</div>
+</div>
+{% endif %}
+{% endfor %}
+
+{% if wordlists %}
+<h3> Wordlists ({{ wordlists|length }})</h3>
+<div class='results'>
+{% for wordlist in wordlists %}
+<div>
+<a href="{% url 'myproject.wordlists.views.show' wordlist.list_id %}">{{ wordlist.title }}</a>
+</div>
+{% endfor %}
+</div>
+{% endif %}
+
+{% if assets %}
+<h3>Assets </h3>
+{% for doc in assets %}
+<div>
+<h4>{{ doc.doc.title }} ({{ doc.doc.language }})</h4>
+<div class='results'>
+{% for sentence in doc.found.sentences %}
+<div class='found_sentence'>{{ sentence|safe }}</div>
+{% endfor %}
+<div class='load_more'>
+<button type="button" class="btn btn-default btn-xs">Load more</button
+</div>
+</div>
+</div>
+{% endfor %}
+{% endif %}
+
+</div>
+{% endif %}
+
+</form>
+{% endblock %}

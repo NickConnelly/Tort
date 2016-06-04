@@ -1,0 +1,18 @@
+<TranslatorArrayRequest>
+  <AppId/>
+  <From>en</From>
+  <Options>
+    <Category xmlns="http://schemas.datacontract.org/2004/07/Microsoft.MT.Web.Service.V2"/>
+    <ContentType xmlns="http://schemas.datacontract.org/2004/07/Microsoft.MT.Web.Service.V2">text/plain</ContentType>
+    <ReservedFlags xmlns="http://schemas.datacontract.org/2004/07/Microsoft.MT.Web.Service.V2"/>
+    <State xmlns="http://schemas.datacontract.org/2004/07/Microsoft.MT.Web.Service.V2"/>
+    <Uri xmlns="http://schemas.datacontract.org/2004/07/Microsoft.MT.Web.Service.V2"/>
+    <User xmlns="http://schemas.datacontract.org/2004/07/Microsoft.MT.Web.Service.V2"/>
+  </Options>
+  <Texts>
+    <string xmlns="http://schemas.microsoft.com/2003/10/Serialization/Arrays">Hey there Jenny, apple?</string>
+    <string xmlns="http://schemas.microsoft.com/2003/10/Serialization/Arrays">looking good</string>
+    <string xmlns="http://schemas.microsoft.com/2003/10/Serialization/Arrays">I guess</string>
+  </Texts>
+  <To>de</To>
+</TranslatorArrayRequest>

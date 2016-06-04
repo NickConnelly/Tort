@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block pagetitle %}Wordlists{% endblock %}
+
+{% block javascript_onload %}
+$(".dropdown_button").click(function() {
+    var form = $(this).parents('form:first');
+    form.append('<input type="hidden" name="' + $(this).attr("name") + '" value="'+$(this).attr("value")+'">');
+    form.submit();
+});
+{% endblock %}
+
+{% block content %}
+<form action='{{ url }}' method='POST'>
+{% csrf_token %}
+
+{% if message %}
+
+<div class="alert alert-{% if message.success %}success{% else %}danger{% endif %}">
+<button type="button" class="close">&times;</button>
+{{ message.message }}
+</div>
+{% endif %}
+
+{% if wordlists %}
+<div class="wordlists list-group">
+    {% for wordlist in wordlists %}
+    <div class="list-group-item" style='border-left: 3pt solid {{ wordlist.color }};'>
+      <h4 class="list-group-item-heading">
+          <input type='checkbox' name='cb_{{ wordlist.list_id }}' />
+          &nbsp;
+          {{ wordlist.title }}
+          <span class='language'>({{ wordlist.language }})</span>
+      </h4>
+      <div>
+        {{ wordlist.description}}
+      </div>
+      <div>
+      <a href='{% url "assets.views.show_list" wordlist.list_id %}'>show</a> | 
+      <a href='{% url "edit" wordlist.list_id %}'>edit info</a> |
+      <a href='{% url "add_words" wordlist.list_id %}'>add words</a>
+      </div>
+      
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+    <p>No wordlists.</p>
+{% endif %}
+
+<p>
+
+<a href='{% url "add_new_wordlist" %}' class="btn btn-default">Add new</a> or take an action to the selected lists
+<div class="btn-group inline-block">
+  <button type='submit' name='delete' value='delete' class="btn btn-default">Delete</button>
+
+  <div class="btn-group">
+    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+      Blind merge to (and keep)
+      <span class="caret"></span>
+    </button>
+    <ul class="dropdown-menu">
+      {% for wordlist in wordlists %}
+      <li><a href='#' name='blind_merge_keep' value="{{ wordlist.list_id }}" class='dropdown_button'>{{ wordlist.title }}</a></li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <div class="btn-group">
+    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+      Blind merge to (and delete)
+      <span class="caret"></span>
+    </button>
+    <ul class="dropdown-menu">
+      {% for wordlist in wordlists %}
+      <li><a href='#' name='blind_merge_delete' value="{{ wordlist.list_id }}" class='dropdown_button'>{{ wordlist.title }}</a></li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <div class="btn-group">
+    <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+      Attended merge to
+      <span class="caret"></span>
+    </button>
+    <ul class="dropdown-menu">
+      {% for wordlist in wordlists %}
+      <li><a href="#" name='attended_merge' value="{{ wordlist.list_id }}" class='dropdown_button'>{{ wordlist.title }}</a></li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+
+</p>
+
+</form>
+
+{% endblock %}
+

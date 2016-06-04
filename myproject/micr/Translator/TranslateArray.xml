@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+
+<TranslateArrayRequest>
+  <AppId />
+  <From>en</From>
+  <Options>
+    <Category xmlns="http://schemas.datacontract.org/2004/07/Microsoft.MT.Web.Service.V2" >string-value</Category>
+    <ContentType xmlns="http://schemas.datacontract.org/2004/07/Microsoft.MT.Web.Service.V2">text/plain</ContentType>
+    <ReservedFlags xmlns="http://schemas.datacontract.org/2004/07/Microsoft.MT.Web.Service.V2" />
+    <State xmlns="http://schemas.datacontract.org/2004/07/Microsoft.MT.Web.Service.V2" >int-value</State>
+    <Uri xmlns="http://schemas.datacontract.org/2004/07/Microsoft.MT.Web.Service.V2" >string-value</Uri>
+    <User xmlns="http://schemas.datacontract.org/2004/07/Microsoft.MT.Web.Service.V2" >string-value</User>
+  </Options>
+  <Texts>
+    <string xmlns="http://schemas.microsoft.com/2003/10/Serialization/Arrays">Hey there, what is your name</string>
+    <string xmlns="http://schemas.microsoft.com/2003/10/Serialization/Arrays">My name is nick</string>
+    </Texts>
+  <To>de</To>
+</TranslateArrayRequest>

@@ -1,0 +1,54 @@
+#!/usr/bin/perl
+
+use utf8;
+use Encode;
+binmode STDIN,":utf8";
+binmode STDOUT,":utf8";
+
+$mark_start = "\e[35;1m";
+$mark_stop = "\e[0m";
+
+$regexp=$ARGV[0];
+$regexp=decode("utf8",$regexp);
+
+$page=$ARGV[1];
+shift @ARGV;
+$number_of_printed = 0;
+$number_of_printed_max = 200;
+if (not $regexp) {
+    $mark_start = "";
+    $mark_stop = "";
+    $number_of_printed_max = 999999;
+}
+
+for $page (@ARGV) {
+    if (open(PAGE, "$page")) {
+        binmode PAGE,":utf8";
+        local $/;
+        $text=<PAGE>;
+        $text =~ s@http://[a-zA-Z&_.:/0-9%?=,\#+()\[\]~-]*@@g;
+        $text =~ s@\n@ @g;
+        $text =~ s@(Mr|Mrs|viz)\.@\1POINT@g;
+        $text =~ s@e\.g\.@ePOINTgPOINT@g;
+        $text =~ s@i\.e\.@iPOINTePOINT@g;
+        @sentences=split /[.!?]/, $text;
+        for (@sentences) {
+            next if m{file://};
+            s@iPOINTePOINT@i\.e\.@g;
+            s@ePOINTgPOINT@e\.g\.@g;
+            s@(Mr|Mrs|viz)POINT@\1.@g;
+            s/^\s*//;
+            s/\s*$//;
+            s/\[[0-9]+\]//g;
+            s/\s+/ /g;
+            if (/\b$regexp\b/ and $number_of_printed < $number_of_printed_max ) {
+                s/\b($regexp)\b/$mark_start$1$mark_stop/;
+                print "$_.\n\n";
+                $number_of_printed++;
+            }
+            if ($number_of_printed >= $number_of_printed_max) {
+                exit(0);
+            };
+        }
+    }
+}

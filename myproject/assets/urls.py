@@ -1,0 +1,20 @@
+# -*- coding: utf-8 -*-
+#from django.conf.urls.defaults import patterns, url
+from django.conf.urls import patterns, url
+
+urlpatterns = patterns('myproject.assets.views',
+    url(r'^list/$', 'list', name='list'),
+    url(r'^upload/$', 'upload', name='upload'),
+    url(r'^converted/(.*)', 'converted', name='converted'),
+    url(r'^words/(.*)', 'words', name='words'),
+    url(r'^mark_words/([^/]*)$', 'mark_words', name='mark_words'),
+    url(r'^mark_words/([^/]+)/(.*)', 'mark_words', name='mark_words'),
+    url(r'^attended_merge/([^/]+)/(.*)', 'attended_merge', name='attended_merge'),
+    url(r'^show_list/([^/]+)$', 'show_list', name='show_list'),
+    url(r'^grep/([^/]*)/([^/]*)$', 'grep', name='grep'),
+    url(r'^grep/([^/]*)/([^/]*)/([0-9]+)$', 'grep', name='grep'),
+    url(r'^search/$', 'search', name='search'),
+    url(r'^search/([^/]*)$', 'search', name='search'),
+    url(r'^translate/([^/]*)/([^/]*)', 'translate', name='translate'),
+    url(r'^frequencylist/$', 'frequency', name='frequency'),
+)

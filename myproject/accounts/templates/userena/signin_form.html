@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block pagetitle %}Login{% endblock %}
+{% load bootstrap3 %}
+{% block body %}
+<div class="container">
+  <form class="form-signin" role="form" method="post" action="">
+    {% csrf_token %}
+    <h2 class="form-signin-heading">Please sign in</h2>
+    {% bootstrap_form form %}
+
+
+    <div class="btn-group">
+      <button class="btn btn-lg btn-primary" type="submit">Sign in</button>
+      <a class="btn btn-lg btn-info" href='/accounts/signup/'>Sign up</a>
+    </div>
+    <div>
+    <!--
+    <a href='/accounts/password/reset/'>Forgot password?</a>
+    -->
+    </div>
+  </form>
+</div>
+{% endblock %}
+

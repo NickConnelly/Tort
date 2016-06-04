@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Minimal Django File Upload Example</title>	
+	</head>
+
+    <style TYPE="text/css"> 
+       .upload_form { background:#ccccff; }
+    </style>
+
+	<body>
+		<!-- List of uploaded documents -->
+		{% if documents %}
+			<table>
+			{% for document in documents %}
+				<tr>
+                <td> <span>{{ document.title }}</span> </td>
+                <td> <a href="{{ document.docfile.url }}">{{ document.docfile.name }}</a> </td>
+                </tr>
+			{% endfor %}
+			</table>
+		{% else %}
+			<p>No documents.</p>
+		{% endif %}
+
+		<!-- Upload form. Note enctype attribute! -->
+		<form action="{% url "list" %}" method="post" enctype="multipart/form-data" class='upload_form'>
+			{% csrf_token %}
+
+            {% for field in form %}
+            {% if field != docfile %}
+                <div class="fieldWrapper">
+                    {{ field.errors }}
+                    {{ field.label_tag }} {{ field }}
+                </div>
+            {% endif %}
+            {% endfor %}
+
+			<p><input type="submit" value="Upload" /></p>
+		</form>
+		
+	</body>
+
+</html> 

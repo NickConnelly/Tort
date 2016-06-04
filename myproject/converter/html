@@ -1,0 +1,4 @@
+#!/bin/sh
+
+lynx -dump -nolist "$1" |  iconv -f UTF-8 -c | sed 's/[[][0-9]*[]]//g' > "$2"
+

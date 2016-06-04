@@ -1,0 +1,10 @@
+django==1.6
+django-bootstrap3
+django-admin-bootstrapped
+django-user-accounts==1.0c3
+pinax-theme-bootstrap-account==1.0b2
+guess-language
+django-colorful==0.1.3
+PyStemmer
+django-userena
+nltk

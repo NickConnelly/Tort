@@ -1,0 +1,52 @@
+== To Do ==
+
+* database migration/south
+
+* users see only their files/their lists
+
+* lists merge (full)
+* lists merge (selected)
+* lists deletion
+
+* applied lists selection
+
+* documentation
+
+* text files processing
+
+* irregular vers
+* plurals
+
+* batch upload
+
+=== Tests ===
+
+=== Demo ===
+
+Demo formats:
+
+* pdf
+* txt
+* html
+* srt
+* OCRed pdf
+
+Demo features:
+
+Demo languages:
+
+* English
+* German
+* Spanish
+* French
+
+
+=== Bugs ===
+
+
+== Done ==
+
+* language detection
+* new-words integration
+* automatic lists creation/for each lang
+

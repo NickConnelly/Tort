@@ -1,0 +1,83 @@
+   Profile:
+
+   When using the button profile it says “page not found”.
+
+   Lists:
+
+   When I used the “Lists” button in the first place there were none. As
+   soon as I uploaded a document in English there was the “Basic English
+   Vocabulary” list. Do lists only pop up, when uploading a file in that
+   language?
+
+   Wanting to take a look at the “Basic English Vocabulary” nothing
+   happened.
+
+   Why is that list marked yellow? Does every language have another color?
+
+   When I wanted to “Update” the wordlist it didn't let me. It brought me
+   back to the “Lists” page.
+
+   Creating a new list is easy. Adding words to a wordlist is also
+   intuitive but it seems to be a lot of work.
+
+   What does “Blind merge to” mean? It is not applicable that wordlists
+   will be merged. Only when the notice pops up one understands that.
+
+   What does “attended merge to” mean?
+
+   I choose to select a wordlist and merge (and keep) it to that same
+   wordlist. Tortoise noted that it merged 1 wordlist. That doesn't make
+   any sense to me.
+
+   Next I chose to merge (and delete) a wordlist to that same wordlist.
+   The wordlist got deleted. It would be nice if there was a notice/an
+   alert whether one was sure whether they wanted to delete something.
+
+   Upload:
+
+   Uploading a small document takes a few minutes.
+
+   Assets:
+
+   Words:
+
+   Word classifications are understandable. In addition it could be useful
+   to add a color to each classification, such as blue for verbs, green
+   for nouns, etc.
+
+   For some words there are Russian descriptions next to the word
+   classification,which is confusing.
+
+   “the” is classified as an article and as an adverb although I don't
+   think it can be an adverb.
+
+   I used play as a verb. Tortoise showed that play can be a verb or a
+   noun. It divides into the words play and playing that I used. I think
+   it would make sense to narrow it down to only “verb” for clearly
+   conjugated verbs such as playing in this case, if possible.
+
+   Using the drop down option for individual words:
+
+   “Nothing similar to..” means? Nothing similar in this text? When using
+   the drop down option there is never anything similar to the word with
+   the classification next to it. How come? Does it still make sense to
+   have the drop down option there?
+
+   When using the drop down option for an individual word, it is nice that
+   that particular word is marked bold. It is only marked bold when it
+   appears first in the document though. I think it would be nice to have
+   it marked bold every single time it is detected in the document.
+
+   When using the drop down option next to the words there is the option
+   to “show more”. Whenever it is pressed something happens in the back
+   end but not in the front end. What is there more that can be shown?
+   Links to other documents?
+
+   It's nice that there is a link to the Upload section.
+
+   The words are always shown as their 'stem/basic form' and in the way
+   they appear in the text. If there is only one way of spelling a word
+   that becomes redundant,. This applies to words like the, to, me, etc.
+   Therefore those words would only need to appear once in the list with
+   their frequency and classification. Unless that poses a problem
+   regarding the 'drop down option'.

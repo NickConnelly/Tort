@@ -1,0 +1,919 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+from __future__ import with_statement
+import codecs
+import difflib
+import logging
+import os
+import optparse
+import re
+import subprocess
+import sys
+import Stemmer
+import tempfile
+try:
+    import psyco
+    psyco.full()
+except:
+    pass
+
+config = {
+    'config_directory': os.environ['HOME'] + '/.new-words',
+    'language': 'en',
+}
+
+allowed_symbols = {
+    'de':   u'^[a-zäöüA-ZÄÖÜß]*$',
+}
+
+import mystemmer
+
+#logging.basicConfig(filename='/tmp/new-words-py.log', level=logging.DEBUG)
+
+class Normalizator:
+    def __init__(self, language, linked_words={}):
+        stemmer_algorithm = {
+            'de' : 'german',
+            'fr' : 'french',
+            'en' : 'english',
+            'es' : 'spanish',
+            'ru' : 'russian',
+            'it' : 'italian',
+            'uk' : 'ukrainian',
+        }
+        try:
+            self.stemmer = Stemmer.Stemmer(stemmer_algorithm[language])
+        except:
+            self.stemmer = None
+        self.linked_words = linked_words
+        
+        if language in [ 'en' ]:
+            self.normalizer = mystemmer.Normalizer(language)
+        else:
+            self.normalizer = None
+
+    def normalize(self, word):
+        word_chain = []
+        while word in self.linked_words and not word in word_chain:
+            word_chain.append(word)
+            word = self.linked_words[word]
+        
+        if self.normalizer:
+            return self.normalizer.normalize( word )
+        if self.stemmer:
+            return self.stemmer.stemWord(word.lower())
+        else:
+            return word.lower()
+
+    def translate(self, word):
+        if self.normalizer:
+            return self.normalizer.translate( word )
+        else:
+            return ''
+
+    def tags(self, word):
+        if self.normalizer:
+            return self.normalizer.tags( word )
+        else:
+            return ''
+
+    def best_word_from_group(self, wordpairs_group):
+        """Returns the word that is the most relevant to the wordpairs_group.
+
+        At the moment: returns the word with minimal length"""
+        
+        def f(x, y):
+            return difflib.SequenceMatcher(
+                        None, 
+                        #(x[-2:] == 'en' and x[:-2].lower() or x.lower()), 
+                        x.lower(),
+                        y.lower()).ratio()
+
+        minimal_length = min(len(pair[1]) for pair in wordpairs_group)
+        best_match = list(x[1] for x in sorted(
+            (x for x in wordpairs_group if len(x[1]) == minimal_length),
+            key=lambda x:x[0],
+            reverse=True))[0]
+
+        return best_match
+
+        suggestions = self.dictionary_suggestions(best_match)
+        if len(suggestions) == 1:
+            return best_match
+
+        verb = False
+        corrected_best_match = best_match
+        if best_match[-2:] == 'et':
+            word = best_match[:-1]+"n"
+            sugg = self.dictionary_suggestions(word)
+            if len(sugg) == 1:
+                return word
+            suggestions += sugg
+            corrected_best_match = word
+            corrected_best_match = best_match[:-2]
+            verb = True
+
+        if best_match[-1] == 't':
+            word = best_match[:-1]+"en"
+            sugg = self.dictionary_suggestions(word)
+            if len(sugg) == 1:
+                return word
+            suggestions += sugg
+            corrected_best_match = best_match[:-1]
+            verb = True
+
+        if corrected_best_match[0].lower() == corrected_best_match[0]:
+            suggestions = [ x for x in suggestions
+                if x[0].lower() == x[0] ]
+
+        if suggestions == []:
+            return best_match+"_"
+        return best_match+" "+(" ".join(
+                            sorted(
+                                suggestions,
+                                key = lambda x: f(x, corrected_best_match),
+                                reverse = True
+                                )
+                            )
+                        )
+
+    def dictionary_suggestions(self, word):
+        return [
+            x.decode('utf-8').rstrip('\n')
+            for x 
+                in subprocess.Popen(
+                    ["de-variants", word],
+                    stdout=subprocess.PIPE
+                ).stdout.readlines() ]
+
+
+parser = optparse.OptionParser()
+
+parser.add_option(
+    "-a", "--no-marks",
+    help="don't add marks (and don't save marks added by user) [NOT IMPLEMENTED YET]",
+    action="store_true",
+    dest="no_marks")
+
+parser.add_option(
+    "-c", "--compressed",
+    help="show compressed wordlist: one word per group",
+    action="store_true",
+    dest="compressed")
+
+parser.add_option(
+    "-C", "--compressed-to-line",
+    help="show compressed wordlist: all words of the group in a line",
+    action="store_true",
+    dest="compressed_to_line")
+
+parser.add_option(
+    "-k", "--known-words",
+    help="put higher words that are similar to the known words (only for English)",
+    action="store_true",
+    dest="compressed")
+
+parser.add_option(
+    "-l", "--language",
+    help="specify language of text",
+    action="store",
+    dest="language")
+
+parser.add_option(
+    "-f", "--allowed-words",
+    help="file with list of allowed words (words that will be shown in the output)",
+    action="store",
+    dest="allowed_words")
+
+parser.add_option(
+    "-G", "--words-grouping",
+    help="turn off word grouping",
+    action="store_true",
+    dest="no_words_grouping")
+
+parser.add_option(
+    "-X", "--function",
+    help="filter through subsystem [INTERNAL]",
+    action="store",
+    dest="function")
+
+parser.add_option(
+    "-m", "--merge-tag",
+    help="merge words tagged with specified tag into the main vocabulary [NOT IMPLEMENTED YET]",
+    action="store",
+    dest="merge_tag")
+
+parser.add_option(
+    "-M", "--merge-tagged",
+    help="merge words tagged with ANY tag into the main vocabulary [NOT IMPLEMENTED YET]",
+    action="store_true",
+    dest="merge_tagged")
+
+parser.add_option(
+    "-n", "--non-interactive",
+    help="non-interactive mode (don't run vi)",
+    action="store_true",
+    dest="non_interactive")
+
+parser.add_option(
+    "-N", "--no-filter",
+    help="switch off known words filtering",
+    action="store_true",
+    dest="no_filter")
+
+parser.add_option(
+    "-p", "--pages",
+    help="work with specified pages only (pages = start-stop/total )",
+    action="store",
+    dest="pages")
+
+parser.add_option(
+    "-d", "--delete-tag",
+    help="delete subvocabulary of specified tag",
+    action="store",
+    dest="delete_tag")
+
+parser.add_option(
+    "-r", "--show-range",
+    help="show only words specified number of words",
+    action="store",
+    dest="show_range")
+
+parser.add_option(
+    "-R", "--show-range-percentage",
+    help="show only words that cover specified percentage of the text, skip the rest",
+    action="store",
+    dest="show_range_percentage")
+
+parser.add_option(
+    "-s", "--text-stats",
+    help="show the text statistics (percentage of known words and so on) and exit",
+    action="store_true",
+    dest="text_stats")
+
+parser.add_option(
+    "-S", "--voc-stats",
+    help="show your vocabulary statistics (number of words and word groups) [NOT IMPLEMENTED YET]",
+    action="store_true",
+    dest="voc_stats")
+
+parser.add_option(
+    "-t", "--tag",
+    help="tag known words with tag",
+    action="store",
+    dest="tag")
+
+parser.add_option(
+    "-T", "--show-tags",
+    help="tag known words with tag",
+    action="store_true",
+    dest="show_tags")
+
+parser.add_option(
+    "-v", "--vocabulary-filename",
+    help="use specified file as a vocabulary",
+    action="store",
+    dest="vocabulary_filename")
+
+parser.add_option(
+    "-w", "--web",
+    help="Web browser version",
+    action="store_true",
+    dest="web")
+
+parser.add_option(
+    "-2", "--two-words",
+    help="find 2 words' sequences",
+    action="store_true",
+    dest="two_words")
+
+parser.add_option(
+    "-3", "--three-words",
+    help="find 3 words' sequences",
+    action="store_true",
+    dest="three_words")
+
+parser.add_option(
+    "-g", "--show-totals",
+    help="shotw totals for each word group",
+    action="store_true",
+    dest="show_totals")
+
+def readlines_from_file(filename):
+    res = []
+    if not os.path.exists(filename):
+        return []
+    with codecs.open(filename, "r", "utf-8") as f:
+        for line in f.readlines():
+            res += [line]
+    return res
+
+def readlines_from_url(url):
+    return [x.decode('utf-8') for x in
+        subprocess.Popen(
+            "lynx -dump '{url}' | perl -p -e 's@http://[a-zA-Z&_.:/0-9%?=,#+()\[\]~-]*@@'".format(url=url),
+            shell = True,
+            stdout = subprocess.PIPE,
+            stderr = subprocess.STDOUT
+            ).communicate()[0].split('\n')
+    ]
+
+def readlines_from_stdin():
+    return codecs.getreader("utf-8")(sys.stdin).readlines()
+
+def words_from_line(line):
+    line = line.rstrip('\n')
+    #return re.split('(?:\s|[*\r,.:#@()+=<>$;"?!|\[\]^%&~{}«»–])+', line)
+    #return re.split('[^a-zA-ZäöëüßÄËÖÜß]+', line)
+    return re.compile("(?!['_])(?:\W)+", flags=re.UNICODE).split(line)
+
+def get_words(lines, group_by=[1], language=None):
+    """
+    Returns hash of words in a file
+    word => number
+    """
+    language_filter = allowed_symbols.get(language)
+    result = {}
+    (a, b, c) = ("", "", "")
+    for line in lines:
+        words = words_from_line(line)
+        for word in words:
+            if re.match('[0-9]*$', word):
+                continue
+            if language_filter and not re.match(language_filter, word):
+                continue
+            result.setdefault(word, 0)
+            result[word] += 1
+            if 2 in group_by and a != "" and b != "":
+                w = "%s_%s" % (a,b)
+                result.setdefault(w, 0)
+                result[w] += 1
+            if 3 in group_by and not "" in [a,b,c]:
+                w = "%s_%s_%s" % (a,b,c)
+                result.setdefault(w, 0)
+                result[w] += 1
+            (a,b,c) = (b, c, word)
+
+    #logging.debug(result)
+    return result
+
+def voc_filename():
+    if 'vocabulary_filename' in config:
+        return config['vocabulary_filename']
+    return "%s/%s.txt"%(config['config_directory'], config['language'])
+
+def load_vocabulary():
+    return get_words(readlines_from_file(voc_filename()))
+
+def notes_filenames():
+    return ["%s/notes-%s.txt"%(config['config_directory'], config['language'])]
+
+def load_notes(files):
+    notes = {}
+    for filename in files:
+        if os.path.exists(filename):
+            with codecs.open(filename, "r", "utf-8") as f:
+                for line in f.readlines():
+                    (word, note) = re.split('\s+', line.rstrip('\n'), maxsplit=1)
+                    notes.setdefault(word, {})
+                    notes[word][filename] = note
+    return notes
+
+def add_notes(lines, notes):
+    notes_filename = notes_filenames()[0]
+    result = []
+    for line in lines:
+        if line.startswith('#'):
+            result += [line]
+        else:
+            match_object = re.search('^\s*\S+\s*(\S+)', line)
+            if match_object:
+                word = match_object.group(1)
+                if word in notes:
+                    if notes_filename in notes[word]:
+                        line = line.rstrip('\n')
+                        line = "%-30s %s\n" % (line, notes[word][notes_filename])
+                        result += [line]
+                else:
+                    result += [line]
+            else:
+                result += [line]
+    return result
+
+def remove_notes(lines, notes_group):
+    notes_filename = notes_filenames()[0]
+    notes = {}
+    for k in notes_group.keys():
+        if notes_filename in notes_group[k]:
+            notes[k] = notes_group[k][notes_filename]
+
+    result = []
+    for line in lines:
+        line = line.rstrip('\n')
+        match_object = re.match('(\s+)(\S+)(\s+)(\S+)(\s+)(.*)', line)
+        if match_object:
+            result.append("".join([
+                match_object.group(1),
+                match_object.group(2),
+                match_object.group(3),
+                match_object.group(4),
+                "\n"
+                ]))
+            notes[match_object.group(4)] = match_object.group(6)
+        else:
+            result.append(line+"\n")
+
+    save_notes(notes_filename, notes)
+    return result
+
+def save_notes(filename, notes):
+    lines = []
+    saved_words = []
+    with codecs.open(filename, "r", "utf-8") as f:
+        for line in f.readlines():
+            (word, note) = re.split('\s+', line.rstrip('\n'), maxsplit=1)
+            if word in notes:
+                line = "%-29s %s\n" % (word, notes[word])
+                saved_words.append(word)
+            lines.append(line)
+    for word in [x for x in notes.keys() if not x in saved_words]:
+        line = "%-29s %s\n" % (word, notes[word])
+        lines.append(line)
+
+    with codecs.open(filename, "w", "utf-8") as f:
+        for line in lines:
+            f.write(line)
+
+
+def substract_dictionary(dict1, dict2):
+    """
+    returns dict1 - dict2
+    """
+    result = {}
+    for (k,v) in dict1.items():
+        if not k in dict2:
+            result[k] = v
+    return result
+
+def dump_words(words, filename):
+    with codecs.open(filename, "w+", "utf-8") as f:
+        for word in words.keys():
+            f.write(("%s\n"%word)*words[word])
+
+def error_message(text):
+    print text
+
+def find_wordgroups_weights(word_pairs, normalizator):
+    weight = {}
+    for (num, word) in word_pairs:
+        normalized = normalizator.normalize(word)
+        weight.setdefault(normalized, 0)
+        weight[normalized] += num
+    return weight
+
+def find_linked_words(notes):
+    linked_words = {}
+    for word in notes.keys():
+        for note in notes[word].values():
+            if "@" in note:
+                result = re.search(r'\@(\S*)', note)
+                if result:
+                    main_word = result.group(1)
+                    if main_word:
+                        linked_words[word] = main_word
+    return linked_words
+
+def compare_word_pairs(pair1, pair2, wgw, normalizator, linked_words):
+    (num1, word1) = pair1
+    (num2, word2) = pair2
+
+    normalized_word1 = normalizator.normalize(word1)
+    normalized_word2 = normalizator.normalize(word2)
+
+    cmp_res = cmp(wgw[normalized_word1], wgw[normalized_word2])
+    if cmp_res != 0:
+        return cmp_res
+    else:
+        cmp_res = cmp(normalized_word1, normalized_word2)
+        if cmp_res != 0:
+            return cmp_res
+        else:
+            return cmp(int(num1), int(num2))
+
+
+def print_words_sorted(
+        word_pairs,
+        stats,
+        normalizator,
+        print_stats=True,
+        stats_only=False,
+        compressed_wordlist=False,
+        compressed_to_line = False,
+        show_totals=False,
+        show_range=0,
+        show_range_percentage=0,
+        ):
+    result = []
+    if stats_only:
+        #codecs.getwriter("utf-8")(sys.stdout).write(
+        result.append(
+            " ".join([
+                "%-10s" % x for x in [
+                "LANG",
+                "KNOWN%",
+                "UNKNOWN%",
+                "KNOWN",
+                "TOTAL",
+                "WPS",
+                "UWPS*10"
+                ]]) + "\n")
+        result.append(
+            " ".join([
+                "%(language)-10s",
+                "%(percentage)-10.2f",
+                "%(percentage_unknown)-10.2f",
+                "%(total_known)-11d"
+                "%(total)-11d"
+                "%(wps)-11d"
+                "%(uwps)-11d"
+                ]) % stats + "\n")
+        return "".join(result)
+
+    if print_stats:
+        result.append(
+            "# %(language)s, %(percentage)-7.2f, <%(total_known)s/%(total)s>, <%(groups)s/%(words)s>\n" % stats)
+
+    known = int(stats['total_known'])
+    total = int(stats['total'])
+    level_lines = range(int(float(stats['percentage']))/5*5+5,90,5)+range(90,102)
+    if 100.0*known/total >= level_lines[0]:
+        current_level = level_lines[0]
+        while 100.0*known/total > level_lines[0]:
+            current_level = level_lines[0]
+            level_lines = level_lines[1:]
+    old_normalized_word = None
+    translation = ""
+    tags = ""
+    words_of_this_group = []
+    this_group = []
+    printed_words = 0
+    for word_pair in word_pairs:
+
+        normalized_word = normalizator.normalize(word_pair[1])
+        if old_normalized_word and old_normalized_word != normalized_word:
+            if compressed_wordlist or show_totals:
+                compressed_word_pair = (
+                    sum(x[0] for x in words_of_this_group),
+                    old_normalized_word
+                    #normalizator.best_word_from_group(words_of_this_group)
+                    )
+                if compressed_to_line:
+                    result.append("%10s %s %s\n" % (compressed_word_pair + (" ".join(y for x,y in words_of_this_group if y not in compressed_word_pair),)))
+                else:
+                    if show_totals:
+                        result.append("##%8s %s ## %s ## %s\n" % (compressed_word_pair+(tags, translation)))
+                    else:
+                        result.append("%10s %s\n" % compressed_word_pair)
+                printed_words += 1
+            words_of_this_group = []
+            result += this_group
+            this_group = []
+
+        old_normalized_word = normalized_word
+        translation = normalizator.translate( normalized_word )
+        tags = normalizator.tags( normalized_word )
+
+        words_of_this_group.append(word_pair)
+
+        if not compressed_wordlist:
+            this_group.append("%10s %s\n" % word_pair)
+            printed_words += 1
+
+
+        known += word_pair[0]
+        if 100.0*known/total >= level_lines[0]:
+            current_level = level_lines[0]
+            while 100.0*known/total > level_lines[0]:
+                current_level = level_lines[0]
+                level_lines = level_lines[1:]
+            this_group.append("# %s\n" % current_level)
+
+        if show_range >0 and printed_words >= show_range:
+            break
+        if show_range_percentage >0 and 100.0*known/total >= show_range_percentage:
+            break
+
+    result += this_group
+
+    return result
+
+def parse_parts_description(parts_description):
+    """
+    Returns triad (start, stop, step)
+    basing on parts_description string.
+     from-to/step
+     from+delta/step
+    """
+
+    try:
+        (a, step) = parts_description.split("/", 1)
+        step = int(step)
+        start = 0
+        stop = 0
+        if '-' in a:
+            (start, stop) = a.split("-", 1)
+            start = int(start)
+            stop = int(stop)
+        elif '+' in a:
+            (start, stop) = a.split("+", 1)
+            start = int(start)
+            stop = int(stop)
+        else:
+            start = int(a)
+            stop = start + 1
+        return (start, stop, step)
+
+    except:
+        raise ValueError("Parts description must be in format: num[[+-]num]/num; this [%s] is incorrect" % parts_description)
+
+
+def take_part(lines, part_description = None):
+    if part_description == None or part_description == '':
+        return lines
+    (start, stop, step) = parse_parts_description(part_description)
+    n = len(lines)
+    part_size = (1.0*n) / step
+    result = []
+    for i in range(n):
+        if i >= start * part_size and i <= stop * part_size:
+            result += [lines[i]]
+    return result
+
+def web_editor(output):
+    from twisted.internet import reactor
+    from twisted.web.server import Site
+    from twisted.web.static import File
+    from twisted.web.resource import Resource
+    import json
+
+    word_list = []
+
+    for o in output:
+        a = re.split('\s+', o.strip(), 2)
+        a = a + ['']*(3-len(a))
+        word_list.append({'number':a[0], 'word':a[1], 'comment':a[2]})
+    
+    print "Loaded ", len(word_list)
+
+    new_words_html = "/home/igor/hg/new-words/web"
+
+    class JSONPage(Resource):
+        isLeaf = True
+        def render_GET(self, request):
+            return json.dumps({"word_list": word_list})
+
+    class SaveJSON(Resource):
+        isLeaf = True
+        def render_POST(self, request):
+            print json.loads(request.args["selected_words"][0])
+            return json.dumps({"status": "ok"})
+
+    json_page = JSONPage()
+    save_json = SaveJSON()
+
+    resource = File(new_words_html)
+    resource.putChild("json", json_page)
+    resource.putChild("save", save_json)
+
+    factory = Site(resource)
+    reactor.listenTCP(8880, factory)
+    reactor.run()
+
+
+def filter_get_words_group_words_add_stat(args):
+    vocabulary = load_vocabulary()
+    notes = load_notes(notes_filenames())
+
+    input_lines = []
+    if len(args) > 0:
+        for arg in args:
+            if 'http://' in arg:
+                input_lines += readlines_from_url(arg)
+            else:
+                input_lines += readlines_from_file(arg)
+    else:
+        input_lines += readlines_from_stdin()
+
+    if len(input_lines) == 0:
+        print >> sys.stderr, "Nothing to do, standard input is empty, exiting."
+        sys.exit(1)
+
+    lines = take_part(input_lines, config.get('pages', ''))
+
+    (_, original_text_tempfile) = tempfile.mkstemp(prefix='new-word')
+    with codecs.open(original_text_tempfile, "w", "utf-8") as f:
+        f.write("".join(lines))
+
+    group_by = [1]
+
+    if 'two_words' in config:
+        group_by.append(2)
+    if 'three_words' in config:
+        group_by.append(3)
+    words = get_words(lines, group_by, language=config['language'])
+    stats_only = False
+    if 'text_stats' in config:
+        stats_only = True
+
+    compressed_wordlist = False
+    if 'compressed' in config or 'compressed_to_line' in config:
+        compressed_wordlist = True
+
+    compressed_to_line = 'compressed_to_line' in config
+
+    if 'show_range' in config:
+        show_range = int(config['show_range'])
+    else:
+        show_range = 0
+
+    if 'show_range_percentage' in config:
+        show_range_percentage = int(config['show_range_percentage'])
+    else:
+        show_range_percentage = 0
+
+
+    stats = {}
+    stats['total'] = sum(words[x] for x in words.keys())
+    if not 'no_filter' in config:
+        words = substract_dictionary(words, vocabulary)
+
+    stats['total_unknown'] = sum(words[x] for x in words.keys())
+    stats['total_known'] = stats['total'] - stats['total_unknown']
+    stats['percentage'] = 100.0*stats['total_known']/stats['total']
+    stats['percentage_unknown'] = 100.0-100.0*stats['total_known']/stats['total']
+    stats['groups'] = 0
+    stats['words'] = len(words)
+    stats['sentences'] = 0  #FIXME
+    stats['wps'] = 0        #FIXME
+    stats['uwps'] = 0       #FIXME
+    stats['language'] = config['language']
+
+    linked_words = find_linked_words(notes)
+    normalizator = Normalizator(config['language'], linked_words)
+
+    # filter words by allowed_words_filter
+    if 'allowed_words' in config:
+        allowed_words_filename = config['allowed_words']
+        normalized_allowed_words = [
+            normalizator.normalize(w.rstrip('\n')) 
+            for w in readlines_from_file(allowed_words_filename)
+        ]
+
+        result = {}
+        for w, wn in words.iteritems():
+            if normalizator.normalize(w) in normalized_allowed_words:
+                result[w] = wn
+        words = result
+
+    words_with_freq = []
+    for k in sorted(words.keys(), key=lambda k: words[k], reverse=True):
+        words_with_freq.append((words[k], k))
+
+    wgw = find_wordgroups_weights(words_with_freq, normalizator)
+    if not 'no_words_grouping' in config or not config['no_words_grouping']:
+        words_with_freq = sorted(
+                words_with_freq,
+                cmp=lambda x,y:compare_word_pairs(x,y, wgw, normalizator, linked_words),
+                reverse=True)
+
+    output = print_words_sorted(
+        words_with_freq,
+        stats,
+        normalizator,
+        stats_only=stats_only,
+        compressed_wordlist=compressed_wordlist,
+        compressed_to_line=compressed_to_line,
+        show_totals=config.get('show_totals', False),
+        show_range=show_range,
+        show_range_percentage=show_range_percentage,
+        )
+
+
+    if ('non_interactive' in config or 'text_stats' in config):
+        codecs.getwriter("utf-8")(sys.stdout).write("".join(output))
+    elif config.get('web', False):
+        web_editor(output)
+    else:
+        (_, temp1) = tempfile.mkstemp(prefix='new-word')
+        (_, temp2) = tempfile.mkstemp(prefix='new-word')
+
+        with codecs.open(temp1, "w", "utf-8") as f:
+            f.write("".join(output))
+        with codecs.open(temp2, "w", "utf-8") as f:
+            f.write("".join(add_notes(output, notes)))
+
+        os.putenv('ORIGINAL_TEXT', original_text_tempfile)
+        os.system((
+            "vim"
+            " -c 'setlocal spell spelllang={language}'"
+            " -c 'set keywordprg={language}'"
+            " -c 'set iskeyword=@,48-57,/,.,-,_,+,,,#,$,%,~,=,48-255'"
+            " {filename}"
+            " < /dev/tty > /dev/tty"
+            ).format(language=config['language'], filename=temp2))
+
+        lines = remove_notes(readlines_from_file(temp2), notes)
+
+        # compare lines_before and lines_after and return deleted words
+        lines_before = output
+        lines_after = lines
+        deleted_words = []
+
+        lines_after_set = set(lines_after)
+        for line in lines_before:
+            if line not in lines_after_set:
+                line = line.strip()
+                if ' ' in line:
+                    word = re.split('\s+', line, 1)[1]
+                    if ' ' in word:
+                        word = re.split('\s+', word, 1)[0]
+                deleted_words.append(word)
+
+        with codecs.open(voc_filename(), "a", "utf-8") as f:
+            f.write("\n".join(deleted_words + ['']))
+
+        os.unlink(temp1)
+        os.unlink(temp2)
+
+    os.unlink(original_text_tempfile)
+
+(options, args) = parser.parse_args()
+if options.language:
+    config['language'] = options.language
+
+if options.pages:
+    config['pages'] = options.pages
+else:
+    config['pages'] = ""
+
+if options.allowed_words:
+    config['allowed_words'] = options.allowed_words
+
+if options.show_range:
+    config['show_range'] = options.show_range
+
+if options.show_range_percentage:
+    config['show_range_percentage'] = options.show_range_percentage
+
+if options.non_interactive:
+    config['non_interactive'] = True
+
+if options.text_stats:
+    config['text_stats'] = True
+
+if options.compressed:
+    config['compressed'] = True
+
+if options.compressed_to_line:
+    config['compressed_to_line'] = True
+
+if options.no_filter:
+    config['no_filter'] = True
+
+if options.two_words:
+    config['two_words'] = True
+
+if options.three_words:
+    config['three_words'] = True
+
+if options.no_words_grouping:
+    config['no_words_grouping'] = True
+
+if options.show_totals:
+    config['show_totals'] = True
+
+if options.web:
+    config['web'] = True
+
+if options.vocabulary_filename:
+    config['vocabulary_filename'] = options.vocabulary_filename
+
+filter_get_words_group_words_add_stat(args)
+
+#if options.function:
+#    function_names = {
+#        'get_words_group_words_add_stat': ,
+#    }
+#    if options.function in function_names:
+#        function_names[options.function](args)
+#    else:
+#        error_message("Unkown function %s.\nAvailable functions:\n%s" % (
+#            options.function, "".join(["   "+x for x in sorted(function_names.keys())])))
+#        sys.exit(1)
+#
+
+
+
+#os.system("vim")
+

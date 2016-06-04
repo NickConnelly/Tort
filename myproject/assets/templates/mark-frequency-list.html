@@ -1,0 +1,447 @@
+{% extends "base.html" %}
+{% load bootstrap3 %}
+
+{% block pagetitle %}{{ document.title }} ({{ document.language }}) - Mark Frequency List{% endblock %}
+
+{% block style %}
+<link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css">
+<style>
+#selectable .ui-selecting {
+    background: #ccc;
+}
+#selectable .ui-selected {
+    background: #aaccff;
+}
+.word_line_group_total,
+.word_line {
+    padding-top: 6pt;
+    padding-bottom: 6pt;
+}
+.word_line_group_total {
+    font-size: 110%;
+}
+.word_line {
+    color: #cccccc;
+}
+#selectable .ui-selecting .word_line {
+    color: #999999;
+}
+#selectable .ui-selected .word_line {
+    color: #7799cc;
+}
+.word_line_group_total .count,
+.word_line .count {
+    width: 30pt;
+    text-align:right;
+    display: inline-block;
+    padding-right: 5pt;
+    font-size: 80%;
+}
+.description {
+    visibility: hidden;
+}
+.description > a:visited {
+    color: blue;
+}
+ul { 
+    list-style-type:none;
+    padding: 0;
+    margin: 0;
+}
+li:hover .description {
+    visibility: visible;
+}
+li:hover .word_line {
+    color: #555555;
+}
+li {
+    /*padding-top: 4pt;*/
+    padding-bottom: 0pt;
+    margin: 0;
+}
+li > div {
+    padding: 0;
+    margin: 0;
+}
+.translation,
+.examples {
+    display: none;
+}
+.translation,
+.examples > p {
+    font-size: 9pt;
+    margin: 0;
+    padding: 3pt;
+    margin-left:20pt;
+    padding-left:15pt;
+    border :none;
+    border-left: 1pt dotted gray;
+}
+.examples > p.load_more {
+    border-right: 1pt dotted white;
+    border-top: 1pt dotted gray;
+    border-bottom: 1pt dotted white;
+}
+.examples > p.load_more:hover {
+    background: #eeeeee;
+    border: 1pt dotted gray;
+}
+.ui-selected > div > p {
+    background: #ddeeff;
+}
+.selected_words_panel {
+    margin-right: -10pt;
+    padding: 10pt;
+    background: #eeeeee;
+    -webkit-box-shadow: 0 8px 6px -6px black;
+       -moz-box-shadow: 0 8px 6px -6px black;
+            box-shadow: 0 8px 6px -6px black;
+
+    width: 300px;
+}
+.selected_words_panel .controls {
+    margin-bottom: -10pt;
+    margin-left: -10pt;
+    padding-top: 5pt;
+}
+.selected_words_panel .title {
+    font-weight: bold;
+}
+.selected_words_panel .language {
+    color: #777777;
+    font-size: 90%;
+    border-bottom: 1pt gray solid;
+    margin-bottom: 5pt;
+}
+.main_panel {
+    width: 640px;
+    height: 100%;
+    margin-left: auto ;
+    margin-right: auto ;
+    background: #ffffff;
+    padding-left: 10pt;
+    padding-right: 10pt;
+    border: 1pt black solid;
+    height: auto !important;
+    height:100%;
+}
+.filters_area {
+    display: none;
+}
+html, body {
+    margin: 0;
+    padding: 0;
+    /*
+    font-family: "Arial Black", "Arial Bold", Gadget, sans-serif;
+    background: #cccccc;
+    height: 100%;
+    */
+}
+.list_border_separator {
+    width: 3pt;
+    display: table-cell;
+}
+{% for list in lists %}
+.list_{{ list.list_id }} ,
+.list_{{ list.list_id }}_off {
+    width: 3pt;
+    display: table-cell;
+}
+.list_{{ list.list_id }} {
+    background: {{ list.color }};
+}
+.list_{{ list.list_id }}_off {
+    background: none;
+}
+.list_{{ list.list_id }}_marker {
+    color: {{ list.color }};
+}
+
+.word_line_group_total .word {
+    display:inline-block;
+    width: 70pt;
+}
+.short_translation {
+    /*
+    display:inline-block;
+    width: 100pt;
+    */
+    padding-left: 10pt;
+    border-left: gray 1pt dotted;
+}
+.tags {
+    display:inline-block;
+    width: 100pt;
+    /*
+    font-size: 80%;
+    font-style: italic;
+    */
+    padding-left: 10pt;
+    border-left: gray 1pt dotted;
+}
+{% endfor %}
+</style>
+{% endblock %}
+
+{% block content %}
+<div style='float:right; width:300px'>
+<div class='selected_words_panel sticky resizable'>
+    <div class='title'>{% if doing_merge %}Merging to {%endif%}{{ document.title }}</div>
+    <div class='language'>{{ document.language }}</div>
+    <span id='selected_counter'>0</span> words selected
+    <span id='selected_words'></span>
+
+    <div>
+    <button type="button" class="btn btn-default btn-xs" id="button_toggle_filters_area">
+        <span class="glyphicon glyphicon-filter"></span><span>Show filters</span><span class="caret"></span>
+    </button>
+    </div>
+
+    <div class='filters_area'>
+    {% for list in lists %}
+    <div>
+    <input type="checkbox" class="switch-mini filters_switch" id="filter_{{ list.list_id }}" /> <i class="glyphicon glyphicon-asterisk list_{{ list.list_id }}_marker"></i> {{list.title}}
+    </div>
+    {% endfor %}
+    <input type="checkbox" class="switch-mini filters_switch" id="filter_other"/> Other
+    </div>
+
+    <div class='controls'>
+
+        <div class="btn-group btn-group-xs">
+            <button type="button" class="btn btn-default btn-xs" id='save_marked_words'>
+            <span class="glyphicon glyphicon-floppy-disk"></span>{% if doing_merge %} Merge {% else %} Mark as known {% endif %}
+            </button>
+            <div class="btn-group">
+            <button type="button" class="btn btn-default dropdown-toggle btn-xs" data-toggle="dropdown">
+            <span class="glyphicon glyphicon-ok-sign"></span> {% if doing_merge %} Merge to ... {% else %} Save to {% endif %} <span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu" role="menu">
+                {% for list in lists %}
+                <li><a href="#" class='save_marked_words_to_list' id='to_list_{{ list.list_id }}'><i class="glyphicon glyphicon-asterisk list_{{ list.list_id }}_marker"></i> {{ list.title }}</a></li>
+                {% endfor %}
+                <li role="presentation" class="divider"></li>
+                <li><a href="{% url 'myproject.wordlists.views.add_new_wordlist' %}">Add new list</a></li>
+            </ul>
+            </div>
+            {% if show_list %}
+            <a type="button" class="btn btn-default btn-xs" id='add_words' href='{% url "myproject.wordlists.views.add_words" document.list_id %}'>
+            <span class="glyphicon glyphicon-plus"></span>Add words
+            </a>
+            {% endif %}
+        </div>
+
+    </div>
+</div>
+</div>
+
+
+<ul id="selectable">
+{% for i in TemplateList %}
+<li>
+  <div style='display:table'>
+    <span class='count'> {{ i.2 }} </span>
+    <span class='word'> {{ i.0 }} </span>
+    <span class='short_translation'> {{ i.1 }} </span>
+  </div>
+</li>
+{% endfor %}
+</ul>
+
+</div>
+
+<script>
+
+var djangoData = {{ django_data }};
+var updateSelected = function() {
+    var selected_counter = $(".ui-selected").length;
+    var selected_words = $('.ui-selected .word').map(function(){ return $(this).text(); }).get();
+
+    $('#selected_counter').text(selected_counter);
+};
+
+var saveMarkedWords = function(list_id) {
+    var data = {
+        'selected_words': $('.ui-selected .word').map(function(){ return $(this).text(); }).get(),
+    };
+
+    var url = djangoData.url_marked_words;
+    if (list_id !== undefined) {
+        url += "/" + list_id;
+    };
+
+    $.ajax({ // create an AJAX call...
+        data: {
+            'data': JSON.stringify(data),
+            'csrfmiddlewaretoken': djangoData.csrf_token
+        },
+        dataType: "json",
+        type: 'POST',
+        url: url,
+        success: function(response) { // on success..
+            if (list_id === undefined) {
+                $('.ui-selected').remove();
+            }
+            else {
+                $('.ui-selected')
+                    .find(".list_"+list_id+"_off") 
+                    .removeClass("list_"+list_id+"_off") 
+                    .addClass("list_"+list_id) ;
+                $('.ui-selected')
+                    .removeClass('ui-selected click-selected');
+            }
+            $('#selected_counter').text(0);
+        }
+    });
+    return false;
+}
+
+var saveMarkedWordsToMainList = function() {
+    return saveMarkedWords();
+}
+
+var saveMarkedWordsToList = function() {
+    var list_id = $(this).attr('id').substr(8);
+    return saveMarkedWords(list_id);
+}
+
+var findWordUsageExamples = function(word, start) {
+    var url;
+    url = djangoData.url_grep + word;
+    if (start !== undefined) {
+        url += "/" + start;
+    }
+    return $.ajax({
+        data: {},
+        dataType: "json",
+        type: 'GET',
+        url: url,
+    });
+};
+
+var findTranslation = function(word) {
+    var url;
+    url = djangoData.url_translate + word;
+    return $.ajax({
+        data: {},
+        dataType: "json",
+        type: 'GET',
+        url: url,
+    });
+};
+
+var toggleFiltersArea = function() {
+    if ($(this).children().text() === "Show filters" ) {
+        $(this).children().filter(":eq(1)").text( "Hide filters" );
+        $(".filters_area").show( "fast" );
+    }
+    else {
+        $(this).children().filter(":eq(1)").text( "Show filters" );
+        $(".filters_area").hide( "fast" );
+    }
+};
+
+var loadedExamples = {};
+
+var toggleExamples = function() {
+    var icon = $(this).html();
+    var word = $(this).parent().prevAll(".word").text();
+    var is_group_total_line = $(this).parents(".word_line_group_total").length;
+
+    if (icon === "↓") {
+        $(this).html("&uarr;");
+        var that = this;
+        
+        if (!is_group_total_line) {
+            var promiseGrep = findWordUsageExamples(word);
+            promiseGrep.success(function(response) {
+                var answer = response.sentences;
+                loadedExamples[word] = answer.length;
+                answer = _.map(answer, function(s) { return "<p>" + s + "</p>"; }).join("");
+                answer += "<p class='load_more'><a href='#' onclick='loadMoreExamples(this, \""+word+"\"); return false;'>(SHOW MORE)</a></p>";
+                $(that).parent().parent().next().next().html(answer).css("display", "block");
+            });
+        }
+        else {
+            var promiseTranslate = findTranslation(word);
+            promiseTranslate.success(function(response) {
+                var answer = response.translation;
+                $(that).parent().parent().next().html(answer).css("display", "block");
+            });
+        };
+    }
+    else {
+        $(this).html("&darr;");
+        $(this).parent().parent().next().css("display", "none");
+        $(this).parent().parent().next().next().css("display", "none");
+    }
+    return false;
+};
+
+var loadMoreExamples = function(e, word) {
+    var promiseGrep = findWordUsageExamples(word, loadedExamples[word]);
+    promiseGrep.success(function(response) {
+        var answer = response.sentences;
+        loadedExamples[word] += answer.length;
+        answer = _.map(answer, function(s) { return "<p>" + s + "</p>"; }).join("");
+        $(e).parent().before(answer).css("display", "block");
+    });
+};
+
+var applyFilters = function() {
+    if ($("#filter_other").is(':checked')) {
+        $(".list_border_separator").parent().hide();
+    }
+    else {
+        $(".list_border_separator").parent().show();
+    };
+    $(".filters_switch:not(:checked)").each(function() {
+        var list_id = $(this).attr("id").substr(7);
+        if (list_id !== 'other') {
+            if (this.checked) {
+                $(".list_"+list_id).parent().hide();
+            }
+            else {
+                $(".list_"+list_id).parent().show();
+            }
+        }
+    });
+    $(".filters_switch:checked").each(function() {
+        var list_id = $(this).attr("id").substr(7);
+        if (list_id !== 'other') {
+            if (this.checked) {
+                $(".list_"+list_id).parent().hide();
+            }
+            else {
+                $(".list_"+list_id).parent().show();
+            }
+        }
+    });
+};
+
+    $( "#selectable" ).bind( "mousedown", function ( e ) {
+            e.metaKey = true;
+    } ).selectable({
+        selected: function (event, ui) {
+            if ($(ui.selected).hasClass('click-selected')) {
+                $(ui.selected).removeClass('ui-selected click-selected');
+
+            } else {
+                $(ui.selected).addClass('click-selected');
+            };
+            updateSelected();
+        },
+        unselected: function (event, ui) {
+            $(ui.unselected).removeClass('click-selected');
+        },
+        cancel: 'a',
+        filter: $('#selectable').children('li')
+    });
+    $( ".toggle_examples" ).click( toggleExamples );
+    $( "#save_marked_words" ).click( saveMarkedWordsToMainList );
+    $( ".save_marked_words_to_list" ).click( saveMarkedWordsToList );
+    $( "#button_toggle_filters_area" ).click( toggleFiltersArea );
+    $( ".filters_switch" ).change( applyFilters );
+</script>
+
+{% endblock %}

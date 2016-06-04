@@ -1,0 +1,8 @@
+python-dev
+python-pip
+python-virtualenv
+poppler-utils
+sdcv
+lynx
+catdoc
+screen

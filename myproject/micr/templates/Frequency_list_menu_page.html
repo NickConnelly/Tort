@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block pagetitle %}Frequency Lists{% endblock %}
+{% block content %}
+{% if documents %}
+<div class="list-group">
+    {% for document in documents %}
+    <div class="list-group-item">
+      <h4 class="list-group-item-heading">{{ document.title }}</h4>
+      {% if document.language %}
+      <div>{{ document.language }}</div>
+      <a href="{% url "myproject.micr.Translator.Frequency_list.Frequency_list" document.doc_id %}" class="list-group-item-text">Frequency List</a>
+      {% else %}
+      Document is being processed. Please wait
+      {% endif %}
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<p>No assets.</p>
+{% endif %}
+<p><a href='{% url "upload" %}'>Upload?</a></p>
+{% endblock %}

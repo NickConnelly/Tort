@@ -1,0 +1,126 @@
+{% load staticfiles %}
+{% load extras %}
+<!DOCTYPE html>
+<html>
+<head>
+<title>Learnggs - {% block pagetitle %}{% endblock %}</title>
+<script src="http://code.jquery.com/jquery-latest.js"></script>
+<script src="http://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.5.2/underscore-min.js"></script>
+<script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
+<script src="{% static 'jquery.colorPicker.js' %}"></script>
+<link rel="stylesheet" href="{% static 'colorPicker.css' %}" type="text/css" />
+
+{% load bootstrap3 %}
+
+{# Load CSS and JavaScript #}
+
+{% bootstrap_css %}
+{% bootstrap_javascript %}
+
+<style>
+  body {
+    padding-top: 20px;
+    padding-bottom: 20px;
+  }
+  .container-narrow {
+    margin: 0 auto;
+    max-width: 700px;
+  }
+
+  .container-narrow > hr {
+    margin: 40px 0 0 0;
+  }
+
+  .btn-group .inline-block {
+    display: inline;
+    vertical-align: middle;
+  }
+
+  .wordlists .language {
+      font-size: 70%;
+      color: #cccccc;
+  }
+
+/* from mark-words.html */
+.translation {
+    unicode-bidi: embed;
+    font-family: monospace;
+    /*white-space: pre;*/
+
+    white-space: -moz-pre-wrap; /* Firefox */
+    white-space: -pre-wrap; /* ancient Opera */
+    white-space: -o-pre-wrap; /* newer Opera */
+    white-space: pre-wrap; /* Chrome; W3C standard */
+    word-wrap: break-word; /* IE */
+
+    background: #f7f7f7;
+
+    padding-bottom: 10pt;
+    font-size: 9pt;
+}
+.learnggs {
+    font-variant:small-caps;
+}
+</style>
+
+<script>
+$(function() {
+{% block javascript_onload %}
+{% endblock %}
+    $(".close").click(function(){
+          $(this).parent().hide();
+    });
+
+    if (!!$('.sticky').offset()) {
+
+        var stickyTop = $('.sticky').offset().top; // returns number
+        $(window).scroll(function(){ // scroll event 
+
+            var windowTop = $(window).scrollTop(); // returns number
+            if (stickyTop < windowTop) {
+              $('.sticky').css({ position: 'fixed', top: 0 });
+            }
+            else {
+              $('.sticky').css('position','static');
+            }
+
+        });
+
+    };
+
+    $(".resizable").resizable();
+});
+</script>
+
+{% block style %}
+{% endblock %}
+</head>
+<body>
+
+{% block body %}
+
+<div class="container-narrow">
+
+  <ul class="nav nav-pills pull-right">
+    <li class="{% active_reverse request 'myproject.assets.views.list' %}"><a href="{% url 'myproject.assets.views.list' %}">Assets</a></li>
+    <li class="{% active_reverse request 'myproject.assets.views.upload' %}"><a href="{% url 'myproject.assets.views.upload' %}">Upload</a></li>
+    <li class="{% active_reverse request 'myproject.wordlists.views.list_wordlists' %}"><a href="{% url 'myproject.wordlists.views.list_wordlists' %}">Lists</a></li>
+    <li class="{% active_reverse request 'myproject.micr.Translator.views.list_frequency_list' %}"><a href="{% url 'myproject.micr.Translator.views.list_frequency_list' %}">Frequency Lists</a></li>
+    <li class=""><a href="{% url 'myproject.assets.views.search' %}">Search</a></li>
+    {% if request.user.is_superuser %}
+    <li class="{% active request '^/admin' %}"><a href="/admin">Admin</a></li>
+    {% endif %}
+    <li class=""><a href="/accounts/{{ request.user.username }}/edit">Profile</a></li>
+    <li><a href="/accounts/signout">Logout</a></li>
+  </ul>
+  <h3 class="text-muted learnggs">Learnggs</h3>
+  <hr>
+
+{% block content %}
+{% endblock %}
+</div>
+
+{% endblock %}
+
+</body>
+</html>

@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block pagetitle %}Upload{% endblock %}
+{% load bootstrap3 %}
+
+{% block content %}
+
+<div class="jumbotron">
+<h1>Go upload!</h1>
+</div>
+
+<form action="{% url "upload" %}" method="post" enctype="multipart/form-data" class='upload_form'>
+  {% csrf_token %}
+  {% bootstrap_form form %}
+  <button type="submit" class="btn btn-primary btn-lg"> Upload this file </button>
+</form>
+
+{% endblock %}
